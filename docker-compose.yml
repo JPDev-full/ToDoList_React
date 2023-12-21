@@ -1,0 +1,51 @@
+version: '3.1'
+
+services:
+
+  db:
+    image: mysql:5.7
+    container_name: todo-list-db
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+
+  api:
+    build: ./back-end
+    image: todo-list-api
+    container_name: todo-list-api
+    user: node
+    depends_on:
+      - db
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      SERVER_PORT: ${SERVER_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      DB_HOST: db
+    ports:
+      - 3010:${SERVER_PORT}
+    volumes:
+      - ./back-end:/app
+    command: npm run dev
+
+  ui:
+    build: ./front-end
+    image: todo-list-ui
+    container_name: todo-list-ui
+    depends_on:
+      - api
+    restart: always
+    env_file:
+      - ./.env
+    environment:
+      REACT_APP_BACKEND_HOST: ${SERVER_HOST}
+      REACT_APP_BACKEND_PORT: ${SERVER_PORT}
+    ports:
+      - 3000:3000
+    volumes:
+      - ./front-end:/app
+    command: npm start
